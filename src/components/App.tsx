@@ -185,7 +185,7 @@ export default function App() {
             { v: 'favorites', label: '我的最愛', icon: <HeartIcon /> },
             { v: 'search', label: '搜尋', icon: <SearchIcon /> },
           ] as { v: View; label: string; icon: React.ReactNode }[]).map(({ v, label, icon }) => (
-            <button key={v} className={`${styles.navItem} ${view===v?styles.navActive:''}`} onClick={() => { setView(v); setEditRecipe(null); setSidebarOpen(false) }}>
+            <button key={v} className={`${styles.navItem} ${view===v?styles.navActive:''}`} onClick={() => { setView(v); setEditRecipe(null); setCurrentId(null); setSidebarOpen(false) }}>
               <span className={styles.navIcon}>{icon}</span>
               {label}
             </button>
@@ -196,6 +196,7 @@ export default function App() {
           </button>
         </nav>
         <button className={styles.addBtn} onClick={() => {
+          setSidebarOpen(false)
           const blank: Recipe = {
             id: 0, name: '', servings: 2, favorite: false, last_used: null,
             tags: {}, ingredients: Object.fromEntries(settings.ingredient_categories.map(c=>[c,[]])),
@@ -541,7 +542,7 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
             </div>
           </div>
 
-          <div className={styles.formDivider} />
+          <div className={styles.formSectionGap} />
 
           {/* TAGS */}
           <div className={styles.formSectionHeader}>Tags</div>
@@ -558,7 +559,7 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
             </div>
           ))}
 
-          <div className={styles.formDivider} />
+          <div className={styles.formSectionGap} />
 
           {/* URLS */}
           <div className={styles.formSectionHeader}>來源連結</div>
@@ -599,7 +600,7 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
           })}
           <button className={styles.addIngBtn} onClick={addUrl}>＋ 新增連結</button>
 
-          <div className={styles.formDivider} />
+          <div className={styles.formSectionGap} />
 
           {/* INGREDIENTS */}
           <div className={styles.formSectionHeader}>食材</div>
@@ -648,7 +649,7 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
             </div>
           ))}
 
-          <div className={styles.formDivider} />
+          <div className={styles.formSectionGap} />
 
           {/* NOTE */}
           <div className={styles.formSectionHeader}>備注</div>
@@ -671,12 +672,6 @@ function SearchPanel({ recipes, settings, searchState, onSearchChange, onOpen }:
   recipes: Recipe[], settings: AppSettings,
   searchState: any, onSearchChange: (s:any)=>void, onOpen: (id:number)=>void
 }) {
-  const allIngs: string[] = []
-  settings.ingredient_categories.forEach(cat => {
-    ;(settings.common_ingredients[cat]||[]).forEach(i => { if(!allIngs.includes(i)) allIngs.push(i) })
-    recipes.forEach(r => { (r.ingredients[cat]||[]).forEach(i => { if(i.name&&!allIngs.includes(i.name)) allIngs.push(i.name) }) })
-  })
-
   const results = recipes.filter(r => {
     if(searchState.query && !r.name.includes(searchState.query)) return false
     if(searchState.favOnly && !r.favorite) return false
@@ -723,16 +718,6 @@ function SearchPanel({ recipes, settings, searchState, onSearchChange, onOpen }:
             </label>
           </div>
 
-          <div className={styles.filterRow}>
-            <span className={styles.filterLabel}>食材篩選</span>
-            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
-              {allIngs.slice(0,24).map(ing => (
-                <button key={ing} className={`${styles.tagChip} ${searchState.ingredients.includes(ing)?styles.tagChipActive:''}`}
-                  onClick={()=>toggleIng(ing)}>{ing}{searchState.ingredients.includes(ing)?' ✕':''}</button>
-              ))}
-            </div>
-          </div>
-
           {Object.entries(settings.tag_types).map(([type,vals])=>(
             <div key={type} className={styles.filterRow}>
               <span className={styles.filterLabel}>{type}</span>
@@ -744,6 +729,22 @@ function SearchPanel({ recipes, settings, searchState, onSearchChange, onOpen }:
               </div>
             </div>
           ))}
+
+          {settings.ingredient_categories.map(cat => {
+            const catIngs = (settings.common_ingredients[cat] || [])
+            if (!catIngs.length) return null
+            return (
+              <div key={cat} className={styles.filterRow}>
+                <span className={styles.filterLabel}>{cat}</span>
+                <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                  {catIngs.map(ing => (
+                    <button key={ing} className={`${styles.tagChip} ${searchState.ingredients.includes(ing)?styles.tagChipActive:''}`}
+                      onClick={()=>toggleIng(ing)}>{ing}{searchState.ingredients.includes(ing)?' ✕':''}</button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         {(() => {
@@ -777,6 +778,18 @@ function SettingsPanel({ settings, onSave }: { settings: AppSettings, onSave: (s
   const [newTagVals, setNewTagVals] = useState<Record<string,string>>({})
   const [newCat, setNewCat] = useState('')
   const [newIngs, setNewIngs] = useState<Record<string,string>>({})
+  const [editingType, setEditingType] = useState<string|null>(null)
+  const [editingTypeVal, setEditingTypeVal] = useState('')
+
+  const saveTypeName = (oldType: string) => {
+    const newName = editingTypeVal.trim()
+    if (!newName || newName === oldType) { setEditingType(null); return }
+    if (s.tag_types[newName]) { setEditingType(null); return }
+    const next: Record<string,string[]> = {}
+    for (const [k, v] of Object.entries(s.tag_types)) next[k === oldType ? newName : k] = v
+    commit({...s, tag_types: next})
+    setEditingType(null)
+  }
 
   const commit = (next: AppSettings) => { setS(next); onSave(next) }
 
@@ -788,12 +801,34 @@ function SettingsPanel({ settings, onSave }: { settings: AppSettings, onSave: (s
         {/* TAG TYPES */}
         <div className={styles.settingsPanel}>
           <div className={styles.settingsTitle}><TagIcon /> Tag 管理</div>
-          {Object.entries(s.tag_types).map(([type,vals])=>(
-            <div key={type} className={styles.tagGroupBlock}>
+          {Object.entries(s.tag_types).map(([type,vals], idx)=>{
+            const isBlue = idx % 2 === 0
+            const blockStyle = isBlue
+              ? {background:'var(--info-bg)', border:'0.5px solid var(--accent-light)'}
+              : {background:'var(--amber-bg)', border:'0.5px solid #E8C840'}
+            return (
+            <div key={type} className={styles.tagGroupBlock} style={blockStyle}>
               <div className={styles.tagGroupName}>
-                <span>{type}</span>
-                <button className={`${styles.btn} ${styles.btnDanger}`} style={{padding:'4px 8px',fontSize:11}}
-                  onClick={()=>{ const n={...s.tag_types}; delete n[type]; commit({...s,tag_types:n}) }}>刪除類型</button>
+                {editingType === type ? (
+                  <div style={{display:'flex',gap:6,flex:1,alignItems:'center'}}>
+                    <input className={styles.formInput} style={{flex:1,fontSize:13,padding:'4px 8px'}}
+                      value={editingTypeVal} autoFocus
+                      onChange={e=>setEditingTypeVal(e.target.value)}
+                      onKeyDown={e=>{ if(e.key==='Enter') saveTypeName(type); if(e.key==='Escape') setEditingType(null) }} />
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} style={{padding:'4px 8px',fontSize:11}} onClick={()=>saveTypeName(type)}>✓</button>
+                    <button className={styles.btn} style={{padding:'4px 8px',fontSize:11}} onClick={()=>setEditingType(null)}>✕</button>
+                  </div>
+                ) : (
+                  <>
+                    <span>{type}</span>
+                    <div style={{display:'flex',gap:6}}>
+                      <button className={styles.btn} style={{padding:'4px 8px',fontSize:11}}
+                        onClick={()=>{setEditingType(type);setEditingTypeVal(type)}}>改名</button>
+                      <button className={`${styles.btn} ${styles.btnDanger}`} style={{padding:'4px 8px',fontSize:11}}
+                        onClick={()=>{ const n={...s.tag_types}; delete n[type]; commit({...s,tag_types:n}) }}>刪除</button>
+                    </div>
+                  </>
+                )}
               </div>
               <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:8}}>
                 {vals.map(v=>(
@@ -810,7 +845,8 @@ function SettingsPanel({ settings, onSave }: { settings: AppSettings, onSave: (s
                 <button className={styles.btn} onClick={()=>{ const v=(newTagVals[type]||'').trim(); if(v&&!vals.includes(v)){ commit({...s,tag_types:{...s.tag_types,[type]:[...vals,v]}}); setNewTagVals(p=>({...p,[type]:''})) } }}>＋ 新增</button>
               </div>
             </div>
-          ))}
+          )})}
+
           <div className={styles.settingRow} style={{marginTop:12}}>
             <input className={styles.formInput} style={{flex:1}} placeholder="新增 tag 類型名稱…" value={newType}
               onChange={e=>setNewType(e.target.value)}

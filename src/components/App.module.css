@@ -78,7 +78,7 @@
 
 /* Form */
 .formSectionHeader { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-.formDivider { height: 0.5px; background: var(--border); margin: 24px 0; }
+.formSectionGap { height: 28px; }
 .formSection { margin-bottom: 16px; }
 .commonIngsRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
 .commonIngChip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 0.5px solid #B5D4F4; background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; }
