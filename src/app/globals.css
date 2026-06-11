@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --surface2: #F4F3EE;
+  --border: #E8E5DC;
+  --border2: #D4D0C4;
+  --text: #2C2C2A;
+  --text2: #5F5E5A;
+  --text3: #888780;
+  --accent: #0F6E56;
+  --accent-bg: #E1F5EE;
+  --accent-light: #9FE1CB;
+  --danger: #A32D2D;
+  --danger-bg: #FCEBEB;
+  --amber: #BA7517;
+  --amber-bg: #FAEEDA;
+  --info: #185FA5;
+  --info-bg: #E6F1FB;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font-body: 'Noto Sans TC', sans-serif;
+  --font-display: 'Noto Serif TC', serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+button { font-family: var(--font-body); cursor: pointer; }
+input, textarea, select { font-family: var(--font-body); }
+a { color: inherit; }

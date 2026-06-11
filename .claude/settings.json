@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(gh auth *)",
+      "Bash(brew --version)",
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder npm run build)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
