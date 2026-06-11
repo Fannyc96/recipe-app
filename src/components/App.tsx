@@ -210,10 +210,6 @@ export default function App() {
           {recipes.map(r => (
             <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
               <div className={styles.recipeItemName}>{r.name}</div>
-              <div className={styles.recipeItemMeta}>
-                {r.favorite && <span style={{color:'#E24B4A',display:'inline-flex',alignItems:'center'}}><FavHeartIcon filled={true} /></span>}
-                <span>{r.servings}人份</span>
-              </div>
             </button>
           ))}
         </div>
@@ -780,6 +776,8 @@ function SettingsPanel({ settings, onSave }: { settings: AppSettings, onSave: (s
   const [newIngs, setNewIngs] = useState<Record<string,string>>({})
   const [editingType, setEditingType] = useState<string|null>(null)
   const [editingTypeVal, setEditingTypeVal] = useState('')
+  const [editingCat, setEditingCat] = useState<string|null>(null)
+  const [editingCatVal, setEditingCatVal] = useState('')
 
   const saveTypeName = (oldType: string) => {
     const newName = editingTypeVal.trim()
@@ -789,6 +787,17 @@ function SettingsPanel({ settings, onSave }: { settings: AppSettings, onSave: (s
     for (const [k, v] of Object.entries(s.tag_types)) next[k === oldType ? newName : k] = v
     commit({...s, tag_types: next})
     setEditingType(null)
+  }
+
+  const saveCatName = (oldCat: string) => {
+    const newName = editingCatVal.trim()
+    if (!newName || newName === oldCat) { setEditingCat(null); return }
+    if (s.ingredient_categories.includes(newName)) { setEditingCat(null); return }
+    const newCats = s.ingredient_categories.map(c => c === oldCat ? newName : c)
+    const newCommon: Record<string,string[]> = {}
+    for (const [k, v] of Object.entries(s.common_ingredients)) newCommon[k === oldCat ? newName : k] = v
+    commit({...s, ingredient_categories: newCats, common_ingredients: newCommon})
+    setEditingCat(null)
   }
 
   const commit = (next: AppSettings) => { setS(next); onSave(next) }
@@ -858,12 +867,31 @@ function SettingsPanel({ settings, onSave }: { settings: AppSettings, onSave: (s
         {/* INGREDIENT CATEGORIES */}
         <div className={styles.settingsPanel}>
           <div className={styles.settingsTitle}><LeafIcon /> 食材分類與常見食材</div>
-          {s.ingredient_categories.map(cat=>(
-            <div key={cat} className={styles.tagGroupBlock}>
+          {s.ingredient_categories.map((cat, idx)=>(
+            <div key={cat} className={styles.tagGroupBlock} style={idx%2===0
+              ? {background:'var(--info-bg)',border:'0.5px solid var(--accent-light)'}
+              : {background:'var(--amber-bg)',border:'0.5px solid #E8C840'}}>
               <div className={styles.tagGroupName}>
-                <span>{cat}</span>
-                <button className={`${styles.btn} ${styles.btnDanger}`} style={{padding:'4px 8px',fontSize:11}}
-                  onClick={()=>commit({...s,ingredient_categories:s.ingredient_categories.filter(c=>c!==cat)})}>刪除分類</button>
+                {editingCat === cat ? (
+                  <div style={{display:'flex',gap:6,flex:1,alignItems:'center'}}>
+                    <input className={styles.formInput} style={{flex:1,fontSize:13,padding:'4px 8px'}}
+                      value={editingCatVal} autoFocus
+                      onChange={e=>setEditingCatVal(e.target.value)}
+                      onKeyDown={e=>{ if(e.key==='Enter') saveCatName(cat); if(e.key==='Escape') setEditingCat(null) }} />
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} style={{padding:'4px 8px',fontSize:11}} onClick={()=>saveCatName(cat)}>✓</button>
+                    <button className={styles.btn} style={{padding:'4px 8px',fontSize:11}} onClick={()=>setEditingCat(null)}>✕</button>
+                  </div>
+                ) : (
+                  <>
+                    <span>{cat}</span>
+                    <div style={{display:'flex',gap:6}}>
+                      <button className={styles.btn} style={{padding:'4px 8px',fontSize:11}}
+                        onClick={()=>{setEditingCat(cat);setEditingCatVal(cat)}}>改名</button>
+                      <button className={`${styles.btn} ${styles.btnDanger}`} style={{padding:'4px 8px',fontSize:11}}
+                        onClick={()=>commit({...s,ingredient_categories:s.ingredient_categories.filter(c=>c!==cat)})}>刪除</button>
+                    </div>
+                  </>
+                )}
               </div>
               <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:8}}>
                 {(s.common_ingredients[cat]||[]).map(v=>(
@@ -948,10 +976,6 @@ function RecipeGrid({ recipes, onOpen }: { recipes: Recipe[], onOpen: (id: numbe
               {Object.values(r.tags || {}).flat().map(t => (
                 <span key={t} className={styles.tagBadge} style={{fontSize:10}}>{t}</span>
               ))}
-            </div>
-            <div className={styles.recipeCardMeta}>
-              <span>{r.servings}人份</span>
-              {r.favorite && <FavHeartIcon filled={true} />}
             </div>
           </div>
         ))}

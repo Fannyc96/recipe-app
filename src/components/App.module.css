@@ -162,7 +162,7 @@
 .emptyState p { font-size: 14px; line-height: 1.7; }
 
 /* Recipe grid (所有食譜 / 我的最愛 preview) */
-.recipeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.recipeGrid { display: flex; flex-direction: column; gap: 8px; }
 .recipeCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 12px; cursor: pointer; transition: all 0.15s; }
 .recipeCard:hover { border-color: var(--accent-light); box-shadow: 0 2px 10px rgba(24,95,165,0.1); }
 .recipeCardName { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
