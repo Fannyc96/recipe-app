@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Recipe, AppSettings, Ingredient, RecipeUrl } from '@/types'
 import styles from './App.module.css'
@@ -45,7 +45,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
 }
 
-type View = 'list' | 'favorites' | 'recent' | 'search' | 'settings'
+type View = 'list' | 'favorites' | 'search' | 'settings'
 
 export default function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
@@ -62,6 +62,8 @@ export default function App() {
     query: '', ingredients: [] as string[], tagFilters: {} as Record<string,string[]>, mode: 'OR' as 'OR'|'AND', favOnly: false
   })
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
 
   // ── Data loading ──
   const loadData = useCallback(async () => {
@@ -85,11 +87,10 @@ export default function App() {
   }, [toast])
 
   // ── Recipe CRUD ──
-  const openRecipe = async (id: number) => {
+  const openRecipe = (id: number) => {
     setCurrentId(id)
     setEditRecipe(null)
-    await supabase.from('recipes').update({ last_used: new Date().toISOString() }).eq('id', id)
-    setRecipes(prev => prev.map(r => r.id === id ? { ...r, last_used: new Date().toISOString() } : r))
+    setSidebarOpen(false)
     if (view === 'search') setView('list')
   }
 
@@ -145,7 +146,6 @@ export default function App() {
   // ── Sidebar recipe list ──
   const sidebarRecipes = () => {
     if (view === 'favorites') return recipes.filter(r => r.favorite)
-    if (view === 'recent') return [...recipes].sort((a, b) => (b.last_used || '').localeCompare(a.last_used || '')).slice(0, 10)
     return recipes
   }
 
@@ -160,13 +160,27 @@ export default function App() {
   return (
     <div className={styles.app}>
       {sidebarOpen && <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />}
+      {!sidebarOpen && (
+        <div className={styles.edgeSwipeZone}
+          onTouchStart={e => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY }}
+          onTouchEnd={e => {
+            const dx = e.changedTouches[0].clientX - touchStartX.current
+            const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+            if (dx > 50 && dy < 80) setSidebarOpen(true)
+          }}
+        />
+      )}
       {/* SIDEBAR */}
-      <aside className={`${styles.sidebar} ${sidebarOpen ? '' : styles.sidebarCollapsed}`}>
+      <aside className={`${styles.sidebar} ${sidebarOpen ? '' : styles.sidebarCollapsed}`}
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - touchStartX.current
+          const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+          if (dx < -50 && dy < 80) setSidebarOpen(false)
+        }}
+      >
         <div className={styles.sidebarHeader}>
-          <div>
-            <div className={styles.sidebarTitle}>食譜本</div>
-            <div className={styles.sidebarSub}>我的私房食譜</div>
-          </div>
+          <div className={styles.sidebarTitle}>食譜本</div>
           <button className={styles.sidebarToggleBtn} onClick={() => setSidebarOpen(false)} title="收合側欄">
             <ChevronLeftIcon />
           </button>
@@ -175,16 +189,15 @@ export default function App() {
           {([
             { v: 'list', label: '所有食譜', icon: <BookIcon /> },
             { v: 'favorites', label: '我的最愛', icon: <HeartIcon /> },
-            { v: 'recent', label: '最近使用', icon: <ClockIcon /> },
-            { v: 'search', label: '搜尋 / 篩選', icon: <SearchIcon /> },
+            { v: 'search', label: '搜尋', icon: <SearchIcon /> },
           ] as { v: View; label: string; icon: React.ReactNode }[]).map(({ v, label, icon }) => (
-            <button key={v} className={`${styles.navItem} ${view===v?styles.navActive:''}`} onClick={() => { setView(v); setEditRecipe(null) }}>
+            <button key={v} className={`${styles.navItem} ${view===v?styles.navActive:''}`} onClick={() => { setView(v); setEditRecipe(null); setSidebarOpen(false) }}>
               <span className={styles.navIcon}>{icon}</span>
               {label}
             </button>
           ))}
           <div className={styles.divider} />
-          <button className={`${styles.navItem} ${view==='settings'?styles.navActive:''}`} onClick={() => { setView('settings'); setEditRecipe(null) }}>
+          <button className={`${styles.navItem} ${view==='settings'?styles.navActive:''}`} onClick={() => { setView('settings'); setEditRecipe(null); setSidebarOpen(false) }}>
             <span className={styles.navIcon}><SettingsIcon /></span> 設定
           </button>
         </nav>
@@ -206,7 +219,6 @@ export default function App() {
                 <div className={styles.recipeItemMeta}>
                   {r.favorite && <span style={{color:'#E24B4A',display:'inline-flex',alignItems:'center'}}><FavHeartIcon filled={true} /></span>}
                   <span>{r.servings}人份</span>
-                  {r.last_used && <span>{timeAgo(r.last_used)}</span>}
                 </div>
               </button>
             ))}
@@ -316,17 +328,20 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
         <div className={styles.card}>
           <div className={styles.recipeHeader}>
             <h1 className={styles.recipeName}>{recipe.name}</h1>
-            {(recipe.urls || []).length > 0 && (
-              <div className={styles.urlPillsRow}>
-                {recipe.urls.map((u, i) => (
-                  <a key={i} href={u.url} target="_blank" rel="noreferrer" className={styles.urlPill}>
+          </div>
+          {(recipe.urls || []).length > 0 && (
+            <div className={styles.urlList}>
+              {recipe.urls.map((u, i) => (
+                <div key={i} className={styles.urlBlock}>
+                  <a href={u.url} target="_blank" rel="noreferrer" className={styles.urlBlockName}>
                     <LinkIcon /> {u.name || `來源 ${i + 1}`}
                   </a>
-                ))}
-              </div>
-            )}
-            {recipe.last_used && <span className={styles.metaPill}><ClockIcon /> {timeAgo(recipe.last_used)}</span>}
-          </div>
+                  <div className={styles.urlBlockUrl}>{u.url}</div>
+                  {u.note && <div className={styles.urlBlockNote}>{u.note}</div>}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className={styles.servingScaler}>
             <button className={styles.servingBtn} onClick={() => changeScale(-1)}>−</button>
@@ -694,7 +709,7 @@ function SearchPanel({ recipes, settings, searchState, onSearchChange, onOpen }:
 
   return (
     <div>
-      <div className={styles.topbar}><div className={styles.topbarTitle}>搜尋 / 篩選</div></div>
+      <div className={styles.topbar}><div className={styles.topbarTitle}>搜尋</div></div>
       <div className={styles.content}>
         <div className={styles.searchPanel}>
           <input className={styles.searchInputBig} placeholder="搜尋食譜名稱…" value={searchState.query}
@@ -736,10 +751,14 @@ function SearchPanel({ recipes, settings, searchState, onSearchChange, onOpen }:
           ))}
         </div>
 
-        {results.length === 0 ? (
-          <div className={styles.emptyState}><div className={styles.emptyIcon}><SearchIcon /></div><p>沒有符合條件的食譜</p></div>
-        ) : (
-          results.map(r => (
+        {(() => {
+          const hasSearch = searchState.query || searchState.ingredients.length > 0 ||
+            Object.values(searchState.tagFilters).flat().length > 0 || searchState.favOnly
+          if (!hasSearch) return null
+          if (results.length === 0) return (
+            <div className={styles.emptyState}><div className={styles.emptyIcon}><SearchIcon /></div><p>沒有符合條件的食譜</p></div>
+          )
+          return results.map(r => (
             <div key={r.id} className={styles.resultCard} onClick={() => onOpen(r.id)}>
               <div className={styles.resultCardName}>{r.name} {r.favorite ? <span style={{display:'inline-flex',alignItems:'center',verticalAlign:'middle'}}><FavHeartIcon filled={true} /></span> : null}</div>
               <div className={styles.resultCardMeta}>
@@ -748,7 +767,7 @@ function SearchPanel({ recipes, settings, searchState, onSearchChange, onOpen }:
               </div>
             </div>
           ))
-        )}
+        })()}
       </div>
     </div>
   )
