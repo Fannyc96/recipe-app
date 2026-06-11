@@ -13,6 +13,7 @@ const SettingsIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill=
 const MenuIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
 const ChevronLeftIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
 const FavHeartIcon = ({ filled }: { filled: boolean }) => <svg width="17" height="17" viewBox="0 0 24 24" fill={filled ? '#E24B4A' : 'none'} stroke={filled ? '#E24B4A' : 'currentColor'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+const LinkIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
 
 // ── Sub-components are defined below the main component ──
 
@@ -146,6 +147,7 @@ export default function App() {
 
   return (
     <div className={styles.app}>
+      {sidebarOpen && <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />}
       {/* SIDEBAR */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? '' : styles.sidebarCollapsed}`}>
         <div className={styles.sidebarHeader}>
@@ -301,9 +303,16 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
       <div className={styles.content}>
         <div className={styles.card}>
           <div className={styles.recipeHeader}>
-            <div className={styles.recipeNameRow}>
-              <h1 className={styles.recipeName}>{recipe.name}</h1>
-            </div>
+            <h1 className={styles.recipeName}>{recipe.name}</h1>
+            {(recipe.urls || []).length > 0 && (
+              <div className={styles.urlPillsRow}>
+                {recipe.urls.map((u, i) => (
+                  <a key={i} href={u.url} target="_blank" rel="noreferrer" className={styles.urlPill}>
+                    <LinkIcon /> {u.name || `來源 ${i + 1}`}
+                  </a>
+                ))}
+              </div>
+            )}
             {recipe.last_used && <span className={styles.metaPill}>🕐 {timeAgo(recipe.last_used)}</span>}
           </div>
 
@@ -329,20 +338,6 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
                   </div>
                 ) : null
               )}
-            </div>
-          )}
-
-          {/* URLs */}
-          {(recipe.urls || []).length > 0 && (
-            <div className={styles.sectionBlock}>
-              <div className={styles.sectionTitle}>📎 來源連結</div>
-              {recipe.urls.map((u, i) => (
-                <div key={i} className={styles.urlItem}>
-                  <span className={styles.urlNum}>食譜 {i+1}</span>
-                  <a href={u.url} target="_blank" rel="noreferrer" className={styles.urlLink}>{u.name || u.url}</a>
-                  {u.note && <span className={styles.urlNote}>{u.note}</span>}
-                </div>
-              ))}
             </div>
           )}
 

@@ -1,8 +1,9 @@
 .app { display: flex; height: 100vh; overflow: hidden; }
 
 /* Sidebar */
-.sidebar { width: 260px; min-width: 260px; background: var(--surface); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: width 0.25s ease, min-width 0.25s ease; flex-shrink: 0; }
-.sidebarCollapsed { width: 0 !important; min-width: 0 !important; border-right: none !important; }
+.sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 100; width: 260px; background: var(--surface); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transform: translateX(0); transition: transform 0.25s ease; box-shadow: 4px 0 24px rgba(26,42,60,0.14); }
+.sidebarCollapsed { transform: translateX(-260px); }
+.sidebarOverlay { position: fixed; inset: 0; background: rgba(26,42,60,0.28); z-index: 99; }
 .sidebarHeader { padding: 16px 12px 12px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .sidebarTitle { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); }
 .sidebarSub { font-size: 11px; color: var(--text3); margin-top: 2px; }
@@ -45,7 +46,10 @@
 /* Recipe view */
 .recipeHeader { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 0.5px solid var(--border); }
 .recipeNameRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.recipeName { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--text); }
+.recipeName { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.urlPillsRow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.urlPill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 20px; font-size: 12px; background: var(--accent-bg); color: var(--accent); border: 0.5px solid var(--accent-light); text-decoration: none; transition: all 0.15s; }
+.urlPill:hover { background: var(--accent); color: #fff; }
 .favBtn { background: none; border: none; cursor: pointer; padding: 3px; line-height: 1; transition: transform 0.2s; flex-shrink: 0; display: flex; align-items: center; margin-left: 4px; color: var(--text3); }
 .favBtn:hover { transform: scale(1.2); }
 .metaPill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
