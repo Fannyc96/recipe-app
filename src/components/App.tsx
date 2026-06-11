@@ -174,29 +174,31 @@ export default function App() {
           </button>
         </nav>
         {view !== 'search' && view !== 'settings' && (
-          <div className={styles.recipeList}>
-            {sidebarRecipes().map(r => (
-              <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
-                <div className={styles.recipeItemName}>{r.name}</div>
-                <div className={styles.recipeItemMeta}>
-                  {r.favorite && <span style={{color:'#E24B4A'}}>♥</span>}
-                  <span>{r.servings}人份</span>
-                  {r.last_used && <span>{timeAgo(r.last_used)}</span>}
-                </div>
-              </button>
-            ))}
-          </div>
+          <>
+            <button className={styles.addBtn} onClick={() => {
+              const blank: Recipe = {
+                id: 0, name: '', servings: 2, favorite: false, last_used: null,
+                tags: {}, ingredients: Object.fromEntries(settings.ingredient_categories.map(c=>[c,[]])),
+                urls: [], note: ''
+              }
+              setEditRecipe(blank)
+              setCurrentId(null)
+              setView('list')
+            }}>＋ 新增食譜</button>
+            <div className={styles.recipeList}>
+              {sidebarRecipes().map(r => (
+                <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
+                  <div className={styles.recipeItemName}>{r.name}</div>
+                  <div className={styles.recipeItemMeta}>
+                    {r.favorite && <span style={{color:'#E24B4A'}}>♥</span>}
+                    <span>{r.servings}人份</span>
+                    {r.last_used && <span>{timeAgo(r.last_used)}</span>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
         )}
-        <button className={styles.addBtn} onClick={() => {
-          const blank: Recipe = {
-            id: 0, name: '', servings: 2, favorite: false, last_used: null,
-            tags: {}, ingredients: Object.fromEntries(settings.ingredient_categories.map(c=>[c,[]])),
-            urls: [], note: ''
-          }
-          setEditRecipe(blank)
-          setCurrentId(null)
-          setView('list')
-        }}>＋ 新增食譜</button>
       </aside>
 
       {/* MAIN */}
