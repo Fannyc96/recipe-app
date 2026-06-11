@@ -381,20 +381,20 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
 // ──────────────────────────────────────────────
 // RECIPE FORM
 // ──────────────────────────────────────────────
-type FormTab = 'basic' | 'ingredients' | 'urls' | 'tags' | 'note'
-
 function RecipeForm({ recipe, settings, onSave, onCancel }: {
   recipe: Recipe, settings: AppSettings,
   onSave: (r: Recipe) => void, onCancel: () => void
 }) {
   const [r, setR] = useState<Recipe>(JSON.parse(JSON.stringify(recipe)))
-  const [tab, setTab] = useState<FormTab>('basic')
   const [acState, setAcState] = useState<{cat:string,i:number,results:string[]} | null>(null)
-  const [fetchHints, setFetchHints] = useState<Record<number,string>>({})
+  const [fetchResults, setFetchResults] = useState<Record<number, {
+    status: 'loading'|'done'|'fail'
+    title?: string
+    detected?: {name:string;amount:string;unit:string}[]
+  }>>({})
 
   const isEdit = Boolean(recipe.id && recipe.id > 0)
 
-  // ensure all categories exist in ingredients
   const ingWithCats = { ...r.ingredients }
   settings.ingredient_categories.forEach(c => { if (!ingWithCats[c]) ingWithCats[c] = [] })
 
@@ -413,6 +413,14 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
     const next = { ...ingWithCats }
     next[cat] = [...(next[cat] || []), { name: '', amount: '', unit: '' }]
     setField('ingredients', next)
+  }
+
+  const addIngByName = (cat: string, name: string) => {
+    setR(prev => {
+      const cur = prev.ingredients[cat] || []
+      if (cur.some(i => i.name === name)) return prev
+      return { ...prev, ingredients: { ...prev.ingredients, [cat]: [...cur, { name, amount: '', unit: '' }] } }
+    })
   }
 
   const removeIng = (cat: string, i: number) => {
@@ -446,19 +454,44 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
 
   const tryFetch = async (i: number, url: string) => {
     if (!url || !url.startsWith('http')) return
-    setFetchHints(prev => ({ ...prev, [i]: 'loading' }))
-    await new Promise(res => setTimeout(res, 1500))
-    setFetchHints(prev => ({ ...prev, [i]: 'fail' }))
-    setTimeout(() => setFetchHints(prev => { const n={...prev}; delete n[i]; return n }), 5000)
+    setFetchResults(prev => ({ ...prev, [i]: { status: 'loading' } }))
+    try {
+      const res = await fetch('/api/fetch-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        const detected = parseIngredientsFromText(data.description || '')
+        if (data.title) {
+          setR(prev => {
+            if (prev.urls[i]?.name) return prev
+            const nextUrls = [...prev.urls]
+            nextUrls[i] = { ...nextUrls[i], name: data.title }
+            return { ...prev, urls: nextUrls }
+          })
+        }
+        setFetchResults(prev => ({ ...prev, [i]: { status: 'done', title: data.title, detected } }))
+      } else {
+        setFetchResults(prev => ({ ...prev, [i]: { status: 'fail' } }))
+      }
+    } catch {
+      setFetchResults(prev => ({ ...prev, [i]: { status: 'fail' } }))
+    }
   }
 
-  const tabs: { key: FormTab; label: string }[] = [
-    { key:'basic', label:'基本資料' },
-    { key:'ingredients', label:'食材' },
-    { key:'urls', label:'來源連結' },
-    { key:'tags', label:'Tags' },
-    { key:'note', label:'備注' },
-  ]
+  const addDetectedIng = (ing: {name:string;amount:string;unit:string}) => {
+    let targetCat = settings.ingredient_categories[settings.ingredient_categories.length - 1] || '其他'
+    for (const cat of settings.ingredient_categories) {
+      if ((settings.common_ingredients[cat] || []).includes(ing.name)) { targetCat = cat; break }
+    }
+    setR(prev => {
+      const cur = prev.ingredients[targetCat] || []
+      if (cur.some(x => x.name === ing.name)) return prev
+      return { ...prev, ingredients: { ...prev.ingredients, [targetCat]: [...cur, ing] } }
+    })
+  }
 
   return (
     <div>
@@ -469,116 +502,142 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
       </div>
       <div className={styles.content}>
         <div className={styles.card}>
-          <div className={styles.formTabs}>
-            {tabs.map(t => (
-              <button key={t.key} className={`${styles.formTab} ${tab===t.key?styles.formTabActive:''}`} onClick={() => setTab(t.key)}>
-                {t.label}
-              </button>
-            ))}
-          </div>
 
           {/* BASIC */}
-          {tab === 'basic' && (
-            <div>
-              <div className={styles.formSection}>
-                <label className={styles.formLabel}>食譜名稱 *</label>
-                <input className={styles.formInput} value={r.name} placeholder="例：番茄炒蛋" onChange={e => setField('name', e.target.value)} />
-              </div>
-              <div className={styles.formSection} style={{maxWidth:180}}>
-                <label className={styles.formLabel}>基準份量（人份）</label>
-                <input className={styles.formInput} type="number" min={1} value={r.servings} onChange={e => setField('servings', parseInt(e.target.value)||2)} />
-              </div>
-              <div className={styles.formSection}>
-                <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13,color:'var(--text2)'}}>
-                  <input type="checkbox" checked={r.favorite} onChange={e => setField('favorite', e.target.checked)} /> 加入最愛
-                </label>
-              </div>
+          <div className={styles.formSectionHeader}>基本資料</div>
+          <div className={styles.formSection}>
+            <label className={styles.formLabel}>食譜名稱 *</label>
+            <input className={styles.formInput} value={r.name} placeholder="例：番茄炒蛋" onChange={e => setField('name', e.target.value)} />
+          </div>
+          <div style={{display:'flex',gap:16,alignItems:'flex-end',flexWrap:'wrap'}}>
+            <div className={styles.formSection} style={{maxWidth:180}}>
+              <label className={styles.formLabel}>基準份量（人份）</label>
+              <input className={styles.formInput} type="number" min={1} value={r.servings} onChange={e => setField('servings', parseInt(e.target.value)||2)} />
             </div>
-          )}
+            <div className={styles.formSection}>
+              <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13,color:'var(--text2)'}}>
+                <input type="checkbox" checked={r.favorite} onChange={e => setField('favorite', e.target.checked)} /> 加入最愛
+              </label>
+            </div>
+          </div>
 
-          {/* INGREDIENTS */}
-          {tab === 'ingredients' && (
-            <div>
-              {settings.ingredient_categories.map(cat => (
-                <div key={cat} className={styles.ingCatBlock}>
-                  <div className={styles.ingCatLabel}>{cat}</div>
-                  {(ingWithCats[cat] || []).map((ing, i) => (
-                    <div key={i} className={styles.ingFormRow}>
-                      <div style={{position:'relative',flex:2}}>
-                        <input
-                          className={styles.formInput}
-                          value={ing.name}
-                          placeholder={`${cat}名稱`}
-                          onChange={e => { updateIng(cat,i,'name',e.target.value); showAC(cat,i,e.target.value) }}
-                          onBlur={() => setTimeout(()=>setAcState(null),200)}
-                          autoComplete="off"
-                        />
-                        {acState?.cat===cat && acState?.i===i && (
-                          <div className={styles.acList}>
-                            {acState.results.map(m => (
-                              <div key={m} className={styles.acItem} onMouseDown={() => { updateIng(cat,i,'name',m); setAcState(null) }}>{m}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <input className={styles.formInput} value={ing.amount} placeholder="數量" style={{flex:1,minWidth:60}} onChange={e => updateIng(cat,i,'amount',e.target.value)} />
-                      <input className={styles.formInput} value={ing.unit} placeholder="單位" style={{flex:1,minWidth:50}} onChange={e => updateIng(cat,i,'unit',e.target.value)} />
-                      <button className={styles.removeBtn} onClick={() => removeIng(cat,i)}>✕</button>
-                    </div>
-                  ))}
-                  <button className={styles.addIngBtn} onClick={() => addIng(cat)}>＋ 新增{cat}</button>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className={styles.formDivider} />
 
           {/* URLS */}
-          {tab === 'urls' && (
-            <div>
-              {(r.urls || []).map((u, i) => (
-                <div key={i} className={styles.urlFormBlock}>
-                  <div className={styles.urlBlockHeader}>
-                    <span className={styles.urlBlockLabel}>食譜 {i+1}</span>
-                    <button className={styles.removeBtn} onClick={() => removeUrl(i)}>✕</button>
+          <div className={styles.formSectionHeader}>來源連結</div>
+          {(r.urls || []).map((u, i) => {
+            const fr = fetchResults[i]
+            return (
+              <div key={i} className={styles.urlFormBlock}>
+                <div className={styles.urlBlockHeader}>
+                  <span className={styles.urlBlockLabel}>來源 {i+1}</span>
+                  <button className={styles.removeBtn} onClick={() => removeUrl(i)}>✕</button>
+                </div>
+                <input className={styles.formInput} style={{marginBottom:6}} value={u.url} placeholder="https://…"
+                  onChange={e => updateUrl(i,'url',e.target.value)}
+                  onBlur={e => tryFetch(i, e.target.value)} />
+                {fr?.status === 'loading' && <div className={styles.fetchHintLoading}>⏳ 讀取中…</div>}
+                {fr?.status === 'fail' && <div className={styles.fetchHintFail}>⚠️ 無法讀取，請手動填寫</div>}
+                <input className={styles.formInput} style={{marginBottom:6}} value={u.name} placeholder="顯示名稱（自動帶入或手動填）" onChange={e => updateUrl(i,'name',e.target.value)} />
+                <input className={styles.formInput} value={u.note} placeholder="備注（選填）" onChange={e => updateUrl(i,'note',e.target.value)} />
+                {fr?.status === 'done' && fr.detected && fr.detected.length > 0 && (
+                  <div className={styles.detectedIngBox}>
+                    <div className={styles.detectedIngTitle}>偵測到 {fr.detected.length} 項食材，點擊加入 ↓</div>
+                    <div className={styles.detectedIngRow}>
+                      {fr.detected.map((ing, di) => {
+                        const alreadyAdded = Object.values(ingWithCats).flat().some(x => x.name === ing.name)
+                        return (
+                          <button key={di}
+                            className={`${styles.detectedIngChip} ${alreadyAdded ? styles.detectedIngChipAdded : ''}`}
+                            onClick={() => !alreadyAdded && addDetectedIng(ing)}>
+                            {alreadyAdded ? '✓ ' : ''}{ing.name}{ing.amount ? ` ${ing.amount}${ing.unit}` : ''}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <input className={styles.formInput} style={{marginBottom:6}} value={u.url} placeholder="https://…"
-                    onChange={e => updateUrl(i,'url',e.target.value)}
-                    onBlur={e => tryFetch(i, e.target.value)} />
-                  {fetchHints[i] === 'loading' && <div className={styles.fetchHintLoading}>⏳ 嘗試讀取頁面資訊…</div>}
-                  {fetchHints[i] === 'fail' && <div className={styles.fetchHintFail}>⚠️ 無法自動讀取此頁面，請手動填寫食材</div>}
-                  <input className={styles.formInput} style={{marginBottom:6}} value={u.name} placeholder="顯示名稱（選填）" onChange={e => updateUrl(i,'name',e.target.value)} />
-                  <input className={styles.formInput} value={u.note} placeholder="備注（選填）" onChange={e => updateUrl(i,'note',e.target.value)} />
+                )}
+              </div>
+            )
+          })}
+          <button className={styles.addIngBtn} onClick={addUrl}>＋ 新增連結</button>
+
+          <div className={styles.formDivider} />
+
+          {/* INGREDIENTS */}
+          <div className={styles.formSectionHeader}>食材</div>
+          {settings.ingredient_categories.map(cat => (
+            <div key={cat} className={styles.ingCatBlock}>
+              <div className={styles.ingCatLabel}>{cat}</div>
+              {(settings.common_ingredients[cat] || []).length > 0 && (
+                <div className={styles.commonIngsRow}>
+                  {(settings.common_ingredients[cat] || []).map(name => {
+                    const added = (ingWithCats[cat] || []).some(x => x.name === name)
+                    return (
+                      <button key={name}
+                        className={`${styles.commonIngChip} ${added ? styles.commonIngChipAdded : ''}`}
+                        onClick={() => !added && addIngByName(cat, name)}>
+                        {added ? '✓' : '+'} {name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {(ingWithCats[cat] || []).map((ing, i) => (
+                <div key={i} className={styles.ingFormRow}>
+                  <div style={{position:'relative',flex:2}}>
+                    <input
+                      className={styles.formInput}
+                      value={ing.name}
+                      placeholder={`${cat}名稱`}
+                      onChange={e => { updateIng(cat,i,'name',e.target.value); showAC(cat,i,e.target.value) }}
+                      onBlur={() => setTimeout(()=>setAcState(null),200)}
+                      autoComplete="off"
+                    />
+                    {acState?.cat===cat && acState?.i===i && (
+                      <div className={styles.acList}>
+                        {acState.results.map(m => (
+                          <div key={m} className={styles.acItem} onMouseDown={() => { updateIng(cat,i,'name',m); setAcState(null) }}>{m}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <input className={styles.formInput} value={ing.amount} placeholder="數量" style={{flex:1,minWidth:60}} onChange={e => updateIng(cat,i,'amount',e.target.value)} />
+                  <input className={styles.formInput} value={ing.unit} placeholder="單位" style={{flex:1,minWidth:50}} onChange={e => updateIng(cat,i,'unit',e.target.value)} />
+                  <button className={styles.removeBtn} onClick={() => removeIng(cat,i)}>✕</button>
                 </div>
               ))}
-              <button className={styles.addIngBtn} onClick={addUrl}>＋ 新增連結</button>
+              <button className={styles.addIngBtn} onClick={() => addIng(cat)}>＋ 自訂{cat}</button>
             </div>
-          )}
+          ))}
+
+          <div className={styles.formDivider} />
 
           {/* TAGS */}
-          {tab === 'tags' && (
-            <div>
-              {Object.entries(settings.tag_types).map(([type, vals]) => (
-                <div key={type} className={styles.formSection}>
-                  <label className={styles.formLabel}>{type}</label>
-                  <div className={styles.tagSelectGrid}>
-                    {vals.map(v => (
-                      <button key={v}
-                        className={`${styles.selectTag} ${(r.tags[type]||[]).includes(v)?styles.selectTagActive:''}`}
-                        onClick={() => toggleTag(type, v)}>{v}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          <div className={styles.formSectionHeader}>Tags</div>
+          {Object.entries(settings.tag_types).map(([type, vals]) => (
+            <div key={type} className={styles.formSection}>
+              <label className={styles.formLabel}>{type}</label>
+              <div className={styles.tagSelectGrid}>
+                {vals.map(v => (
+                  <button key={v}
+                    className={`${styles.selectTag} ${(r.tags[type]||[]).includes(v)?styles.selectTagActive:''}`}
+                    onClick={() => toggleTag(type, v)}>{v}</button>
+                ))}
+              </div>
             </div>
-          )}
+          ))}
+
+          <div className={styles.formDivider} />
 
           {/* NOTE */}
-          {tab === 'note' && (
-            <div className={styles.formSection}>
-              <label className={styles.formLabel}>備注（步驟、心得、注意事項…）</label>
-              <textarea className={styles.formTextarea} value={r.note} onChange={e => setField('note', e.target.value)} style={{minHeight:200}} />
-            </div>
-          )}
+          <div className={styles.formSectionHeader}>備注</div>
+          <div className={styles.formSection}>
+            <textarea className={styles.formTextarea} value={r.note}
+              placeholder="步驟、心得、注意事項…"
+              onChange={e => setField('note', e.target.value)} style={{minHeight:180}} />
+          </div>
+
         </div>
       </div>
     </div>
@@ -783,6 +842,28 @@ function timeAgo(ts: string) {
   if(d < 86400000) return Math.floor(d/3600000) + ' 小時前'
   if(d < 2592000000) return Math.floor(d/86400000) + ' 天前'
   return Math.floor(d/2592000000) + ' 個月前'
+}
+
+function parseIngredientsFromText(text: string): { name: string; amount: string; unit: string }[] {
+  if (!text) return []
+  const units = ['公克','毫升','大匙','小匙','公升','克','ml','個','根','片','匙','杯','斤','兩','碗','條','顆','包','罐','塊','把','瓣','段','滴','份','隻','支','束','適量','少許','g','G']
+  const unitPat = units.join('|')
+  const results: { name: string; amount: string; unit: string }[] = []
+  const seen = new Set<string>()
+  const lines = text.split('\n')
+  for (const line of lines) {
+    const trimmed = line.trim().replace(/^[•·*\-▸►◆○●■□▷→\s]+/, '')
+    if (!trimmed || trimmed.length > 30) continue
+    const m = trimmed.match(new RegExp(`^([一-鿿\\w\\s（）()]{1,10}?)\\s*(\\d+(?:[./]\\d+)?)\\s*(${unitPat})`))
+    if (m) {
+      const name = m[1].trim()
+      if (name.length >= 1 && !seen.has(name)) {
+        seen.add(name)
+        results.push({ name, amount: m[2], unit: m[3] })
+      }
+    }
+  }
+  return results
 }
 
 function levenshtein(a: string, b: string): number {

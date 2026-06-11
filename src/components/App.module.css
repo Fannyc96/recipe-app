@@ -71,10 +71,19 @@
 .noteBox { padding: 14px; background: var(--surface2); border-radius: var(--radius); border: 0.5px solid var(--border); font-size: 13px; color: var(--text2); line-height: 1.8; white-space: pre-wrap; }
 
 /* Form */
-.formTabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 0.5px solid var(--border); padding-bottom: 8px; flex-wrap: wrap; }
-.formTab { padding: 6px 12px; border-radius: var(--radius); border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; }
-.formTabActive { background: var(--accent-bg) !important; color: var(--accent) !important; font-weight: 500; }
+.formSectionHeader { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.formDivider { height: 0.5px; background: var(--border); margin: 24px 0; }
 .formSection { margin-bottom: 16px; }
+.commonIngsRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.commonIngChip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 0.5px solid var(--border2); background: var(--surface2); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+.commonIngChip:hover { background: var(--info-bg); border-color: #B5D4F4; color: var(--info); }
+.commonIngChipAdded { background: var(--info-bg) !important; border-color: #B5D4F4 !important; color: var(--info) !important; cursor: default !important; }
+.detectedIngBox { margin-top: 10px; padding: 10px 12px; background: var(--info-bg); border: 0.5px solid #B5D4F4; border-radius: var(--radius); }
+.detectedIngTitle { font-size: 12px; color: var(--info); font-weight: 500; margin-bottom: 8px; }
+.detectedIngRow { display: flex; flex-wrap: wrap; gap: 5px; }
+.detectedIngChip { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 0.5px solid #B5D4F4; background: #fff; color: var(--info); cursor: pointer; transition: all 0.15s; }
+.detectedIngChip:hover { background: var(--info); color: #fff; }
+.detectedIngChipAdded { background: var(--info-bg) !important; color: var(--info) !important; opacity: 0.55; cursor: default !important; }
 .formLabel { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; display: block; }
 .formInput { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--surface); font-size: 13px; color: var(--text); outline: none; transition: border-color 0.15s; }
 .formInput:focus { border-color: var(--accent); }
