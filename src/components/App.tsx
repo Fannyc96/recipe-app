@@ -4,6 +4,15 @@ import { supabase } from '@/lib/supabase'
 import { Recipe, AppSettings, Ingredient, RecipeUrl } from '@/types'
 import styles from './App.module.css'
 
+// ── SVG Line Icons ──
+const BookIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+const HeartIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+const ClockIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+const SearchIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+const SettingsIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+const MenuIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+const ChevronLeftIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+
 // ── Sub-components are defined below the main component ──
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -38,6 +47,7 @@ export default function App() {
   const [searchState, setSearchState] = useState({
     query: '', ingredients: [] as string[], tagFilters: {} as Record<string,string[]>, mode: 'OR' as 'OR'|'AND', favOnly: false
   })
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   // ── Data loading ──
   const loadData = useCallback(async () => {
@@ -136,21 +146,31 @@ export default function App() {
   return (
     <div className={styles.app}>
       {/* SIDEBAR */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${sidebarOpen ? '' : styles.sidebarCollapsed}`}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.sidebarTitle}>食譜本</div>
-          <div className={styles.sidebarSub}>我的私房食譜</div>
+          <div>
+            <div className={styles.sidebarTitle}>食譜本</div>
+            <div className={styles.sidebarSub}>我的私房食譜</div>
+          </div>
+          <button className={styles.sidebarToggleBtn} onClick={() => setSidebarOpen(false)} title="收合側欄">
+            <ChevronLeftIcon />
+          </button>
         </div>
         <nav className={styles.sidebarNav}>
-          {(['list','favorites','recent','search'] as View[]).map(v => (
+          {([
+            { v: 'list', label: '所有食譜', icon: <BookIcon /> },
+            { v: 'favorites', label: '我的最愛', icon: <HeartIcon /> },
+            { v: 'recent', label: '最近使用', icon: <ClockIcon /> },
+            { v: 'search', label: '搜尋 / 篩選', icon: <SearchIcon /> },
+          ] as { v: View; label: string; icon: React.ReactNode }[]).map(({ v, label, icon }) => (
             <button key={v} className={`${styles.navItem} ${view===v?styles.navActive:''}`} onClick={() => { setView(v); setEditRecipe(null) }}>
-              <span>{v==='list'?'📖':v==='favorites'?'❤️':v==='recent'?'🕐':'🔍'}</span>
-              {v==='list'?'所有食譜':v==='favorites'?'我的最愛':v==='recent'?'最近使用':'搜尋 / 篩選'}
+              <span className={styles.navIcon}>{icon}</span>
+              {label}
             </button>
           ))}
           <div className={styles.divider} />
           <button className={`${styles.navItem} ${view==='settings'?styles.navActive:''}`} onClick={() => { setView('settings'); setEditRecipe(null) }}>
-            <span>⚙️</span> 設定
+            <span className={styles.navIcon}><SettingsIcon /></span> 設定
           </button>
         </nav>
         {view !== 'search' && view !== 'settings' && (
@@ -238,6 +258,13 @@ export default function App() {
             <button className={styles.toastUndo} onClick={() => { undoDelete(toast.undoId!); setToast(null) }}>復原</button>
           )}
         </div>
+      )}
+
+      {/* SIDEBAR OPEN BUTTON */}
+      {!sidebarOpen && (
+        <button className={styles.sidebarOpenBtn} onClick={() => setSidebarOpen(true)} title="展開側欄">
+          <MenuIcon />
+        </button>
       )}
     </div>
   )
