@@ -46,12 +46,12 @@
 .recipeHeader { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 0.5px solid var(--border); }
 .recipeNameRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .recipeName { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--text); }
-.favBtn { background: none; border: none; cursor: pointer; font-size: 22px; padding: 2px; line-height: 1; transition: transform 0.2s; flex-shrink: 0; }
+.favBtn { background: none; border: none; cursor: pointer; padding: 3px; line-height: 1; transition: transform 0.2s; flex-shrink: 0; display: flex; align-items: center; margin-left: 4px; color: var(--text3); }
 .favBtn:hover { transform: scale(1.2); }
 .metaPill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
-.servingScaler { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--amber-bg); border: 0.5px solid #FAC775; border-radius: var(--radius); margin-bottom: 16px; }
+.servingScaler { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--amber-bg); border: 0.5px solid #E8C840; border-radius: var(--radius); margin-bottom: 16px; }
 .servingScaler span { font-size: 13px; color: var(--amber); font-weight: 500; }
-.servingBtn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid #FAC775; background: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--amber); line-height: 1; transition: all 0.15s; }
+.servingBtn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid #E8C840; background: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--amber); line-height: 1; transition: all 0.15s; }
 .servingBtn:hover { background: var(--amber); color: #fff; }
 .resetLink { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; text-decoration: underline; }
 .sectionBlock { margin-bottom: 20px; }

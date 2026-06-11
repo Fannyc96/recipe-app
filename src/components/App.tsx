@@ -12,6 +12,7 @@ const SearchIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="n
 const SettingsIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
 const MenuIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
 const ChevronLeftIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+const FavHeartIcon = ({ filled }: { filled: boolean }) => <svg width="17" height="17" viewBox="0 0 24 24" fill={filled ? '#E24B4A' : 'none'} stroke={filled ? '#E24B4A' : 'currentColor'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
 
 // ── Sub-components are defined below the main component ──
 
@@ -173,31 +174,29 @@ export default function App() {
             <span className={styles.navIcon}><SettingsIcon /></span> 設定
           </button>
         </nav>
+        <button className={styles.addBtn} onClick={() => {
+          const blank: Recipe = {
+            id: 0, name: '', servings: 2, favorite: false, last_used: null,
+            tags: {}, ingredients: Object.fromEntries(settings.ingredient_categories.map(c=>[c,[]])),
+            urls: [], note: ''
+          }
+          setEditRecipe(blank)
+          setCurrentId(null)
+          setView('list')
+        }}>＋ 新增食譜</button>
         {view !== 'search' && view !== 'settings' && (
-          <>
-            <button className={styles.addBtn} onClick={() => {
-              const blank: Recipe = {
-                id: 0, name: '', servings: 2, favorite: false, last_used: null,
-                tags: {}, ingredients: Object.fromEntries(settings.ingredient_categories.map(c=>[c,[]])),
-                urls: [], note: ''
-              }
-              setEditRecipe(blank)
-              setCurrentId(null)
-              setView('list')
-            }}>＋ 新增食譜</button>
-            <div className={styles.recipeList}>
-              {sidebarRecipes().map(r => (
-                <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
-                  <div className={styles.recipeItemName}>{r.name}</div>
-                  <div className={styles.recipeItemMeta}>
-                    {r.favorite && <span style={{color:'#E24B4A'}}>♥</span>}
-                    <span>{r.servings}人份</span>
-                    {r.last_used && <span>{timeAgo(r.last_used)}</span>}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
+          <div className={styles.recipeList}>
+            {sidebarRecipes().map(r => (
+              <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
+                <div className={styles.recipeItemName}>{r.name}</div>
+                <div className={styles.recipeItemMeta}>
+                  {r.favorite && <span style={{color:'#E24B4A'}}>♥</span>}
+                  <span>{r.servings}人份</span>
+                  {r.last_used && <span>{timeAgo(r.last_used)}</span>}
+                </div>
+              </button>
+            ))}
+          </div>
         )}
       </aside>
 
@@ -304,7 +303,6 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
           <div className={styles.recipeHeader}>
             <div className={styles.recipeNameRow}>
               <h1 className={styles.recipeName}>{recipe.name}</h1>
-              <button className={styles.favBtn} onClick={onToggleFav}>{recipe.favorite ? '❤️' : '🤍'}</button>
             </div>
             {recipe.last_used && <span className={styles.metaPill}>🕐 {timeAgo(recipe.last_used)}</span>}
           </div>
@@ -314,6 +312,9 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
             <span>{displayServings} 人份</span>
             <button className={styles.servingBtn} onClick={() => changeScale(1)}>＋</button>
             {scale !== 1 && <button className={styles.resetLink} onClick={() => onScaleChange(1)}>重設</button>}
+            <button className={styles.favBtn} onClick={onToggleFav} title={recipe.favorite ? '取消最愛' : '加入最愛'}>
+              <FavHeartIcon filled={recipe.favorite} />
+            </button>
           </div>
 
           {/* Tags */}
