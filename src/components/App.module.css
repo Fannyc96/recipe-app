@@ -59,7 +59,7 @@
 .servingBtn:hover { background: var(--amber); color: #fff; }
 .resetLink { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; text-decoration: underline; }
 .sectionBlock { margin-bottom: 20px; }
-.sectionTitle { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.sectionTitle { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
 .tagGroupRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .tagTypeLabel { font-size: 11px; color: var(--text3); min-width: 56px; }
 .tagBadge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; background: var(--info-bg); color: var(--info); border: 0.5px solid #B5D4F4; }
@@ -131,7 +131,7 @@
 
 /* Settings */
 .settingsPanel { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
-.settingsTitle { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 14px; }
+.settingsTitle { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 14px; }
 .tagGroupBlock { background: var(--surface2); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; border: 0.5px solid var(--border); }
 .tagGroupName { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
 .settingChip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; background: var(--surface); border: 0.5px solid var(--border); color: var(--text2); margin: 2px; }
@@ -153,5 +153,6 @@
 
 /* Empty state */
 .emptyState { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; color: var(--text3); text-align: center; gap: 12px; min-height: 300px; }
-.emptyIcon { font-size: 40px; opacity: 0.3; }
+.emptyIcon { opacity: 0.35; display: flex; align-items: center; justify-content: center; }
+.emptyIcon svg { width: 44px; height: 44px; }
 .emptyState p { font-size: 14px; line-height: 1.7; }
