@@ -54,10 +54,10 @@
 .favBtn { background: none; border: none; cursor: pointer; padding: 3px; line-height: 1; transition: transform 0.2s; flex-shrink: 0; display: flex; align-items: center; margin-left: 4px; color: var(--text3); }
 .favBtn:hover { transform: scale(1.2); }
 .metaPill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
-.servingScaler { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--amber-bg); border: 0.5px solid #E8C840; border-radius: var(--radius); margin-bottom: 16px; }
-.servingScaler span { font-size: 13px; color: var(--amber); font-weight: 500; }
-.servingBtn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid #E8C840; background: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--amber); line-height: 1; transition: all 0.15s; }
-.servingBtn:hover { background: var(--amber); color: #fff; }
+.servingScaler { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--info-bg); border: 0.5px solid var(--accent-light); border-radius: var(--radius); margin-bottom: 16px; }
+.servingScaler span { font-size: 13px; color: var(--info); font-weight: 500; }
+.servingBtn { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid var(--accent-light); background: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--info); line-height: 1; transition: all 0.15s; }
+.servingBtn:hover { background: var(--info); color: #fff; }
 .resetLink { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; text-decoration: underline; }
 .sectionBlock { margin-bottom: 20px; }
 .sectionTitle { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
@@ -65,23 +65,23 @@
 .tagTypeLabel { font-size: 11px; color: var(--text3); min-width: 56px; }
 .tagBadge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; background: var(--info-bg); color: var(--info); border: 0.5px solid #B5D4F4; }
 .urlList { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-.urlBlock { padding: 10px 14px; background: var(--surface2); border-radius: var(--radius); border: 0.5px solid var(--border); }
+.urlBlock { padding: 10px 14px; background: var(--info-bg); border-radius: var(--radius); border: 0.5px solid var(--accent-light); }
 .urlBlockName { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 500; color: var(--info); text-decoration: none; margin-bottom: 4px; }
 .urlBlockName:hover { text-decoration: underline; }
 .urlBlockUrl { font-size: 11px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .urlBlockNote { font-size: 12px; color: var(--text2); margin-top: 5px; line-height: 1.5; }
 .ingCatTitle { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 0.5px solid var(--border); margin-top: 12px; }
 .ingGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.ingItem { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 6px; font-size: 13px; background: var(--surface2); }
+.ingItem { display: flex; justify-content: space-between; padding: 5px 8px; border-radius: 6px; font-size: 13px; background: var(--surface); border: 0.5px solid #B5D4F4; }
 .ingAmount { color: var(--text2); font-size: 12px; }
-.noteBox { padding: 14px; background: var(--surface2); border-radius: var(--radius); border: 0.5px solid var(--border); font-size: 13px; color: var(--text2); line-height: 1.8; white-space: pre-wrap; }
+.noteBox { padding: 14px; background: var(--surface); border-radius: var(--radius); border: 0.5px solid #B5D4F4; font-size: 13px; color: var(--text2); line-height: 1.8; white-space: pre-wrap; }
 
 /* Form */
 .formSectionHeader { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .formDivider { height: 0.5px; background: var(--border); margin: 24px 0; }
 .formSection { margin-bottom: 16px; }
 .commonIngsRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-.commonIngChip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 0.5px solid var(--border2); background: var(--surface2); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+.commonIngChip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 0.5px solid #B5D4F4; background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; }
 .commonIngChip:hover { background: var(--info-bg); border-color: #B5D4F4; color: var(--info); }
 .commonIngChipAdded { background: var(--info-bg) !important; border-color: #B5D4F4 !important; color: var(--info) !important; cursor: default !important; }
 .detectedIngBox { margin-top: 10px; padding: 10px 12px; background: var(--info-bg); border: 0.5px solid #B5D4F4; border-radius: var(--radius); }
@@ -105,14 +105,16 @@
 .acList { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); z-index: 50; box-shadow: 0 4px 16px rgba(0,0,0,0.1); max-height: 160px; overflow-y: auto; }
 .acItem { padding: 7px 12px; font-size: 13px; cursor: pointer; color: var(--text); }
 .acItem:hover { background: var(--surface2); }
-.urlFormBlock { background: var(--surface2); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; border: 0.5px solid var(--border); }
+.formSelect { width: 100%; padding: 9px 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.15s; }
+.formSelect:focus { border-color: var(--accent); }
+.urlFormBlock { background: var(--info-bg); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; border: 0.5px solid var(--accent-light); }
 .urlBlockHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .urlBlockLabel { font-size: 12px; font-weight: 500; color: var(--text2); }
 .fetchHintLoading { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 6px; background: var(--info-bg); color: var(--info); }
 .fetchHintFail { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 6px; background: var(--amber-bg); color: var(--amber); }
 .tagSelectGrid { display: flex; flex-wrap: wrap; gap: 6px; }
-.selectTag { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); background: none; cursor: pointer; font-size: 12px; color: var(--text2); transition: all 0.15s; }
-.selectTag:hover { background: var(--surface2); }
+.selectTag { padding: 4px 10px; border-radius: 20px; border: 0.5px solid #B5D4F4; background: var(--surface); cursor: pointer; font-size: 12px; color: var(--text2); transition: all 0.15s; }
+.selectTag:hover { background: var(--info-bg); }
 .selectTagActive { background: var(--info-bg) !important; border-color: #B5D4F4 !important; color: var(--info) !important; }
 
 /* Search */
@@ -124,7 +126,7 @@
 .filterMode { display: flex; border: 0.5px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
 .filterModeBtn { padding: 5px 10px; border: none; background: none; font-size: 12px; cursor: pointer; color: var(--text2); transition: all 0.15s; }
 .filterModeBtnActive { background: var(--accent) !important; color: #fff !important; }
-.tagChip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; font-size: 11px; background: var(--surface2); border: 0.5px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+.tagChip { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; font-size: 11px; background: var(--surface); border: 0.5px solid #B5D4F4; color: var(--text2); cursor: pointer; transition: all 0.15s; }
 .tagChipActive { background: var(--accent-bg) !important; border-color: var(--accent-light) !important; color: var(--accent) !important; }
 .resultCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; }
 .resultCard:hover { border-color: var(--accent-light); background: var(--accent-bg); }
@@ -158,3 +160,11 @@
 .emptyIcon { opacity: 0.35; display: flex; align-items: center; justify-content: center; }
 .emptyIcon svg { width: 44px; height: 44px; }
 .emptyState p { font-size: 14px; line-height: 1.7; }
+
+/* Recipe grid (所有食譜 / 我的最愛 preview) */
+.recipeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.recipeCard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 12px; cursor: pointer; transition: all 0.15s; }
+.recipeCard:hover { border-color: var(--accent-light); box-shadow: 0 2px 10px rgba(24,95,165,0.1); }
+.recipeCardName { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+.recipeCardTags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 20px; }
+.recipeCardMeta { font-size: 11px; color: var(--text3); margin-top: 8px; display: flex; align-items: center; gap: 5px; }

@@ -98,7 +98,7 @@ export default function App() {
     if (!r.name.trim()) { setToast({ msg: '請填寫食譜名稱' }); return }
     if (r.id && recipes.find(x => x.id === r.id)) {
       const { data } = await supabase.from('recipes').update(r).eq('id', r.id).select().single()
-      if (data) { setRecipes(prev => prev.map(x => x.id === r.id ? data : x)); setCurrentId(r.id) }
+      if (data) { setRecipes(prev => [data, ...prev.filter(x => x.id !== r.id)]); setCurrentId(r.id) }
     } else {
       const { id: _id, ...rest } = r as any
       const { data } = await supabase.from('recipes').insert(rest).select().single()
@@ -141,12 +141,6 @@ export default function App() {
   const saveSettings = async (next: AppSettings) => {
     setSettings(next)
     await supabase.from('app_settings').update(next).eq('id', 1)
-  }
-
-  // ── Sidebar recipe list ──
-  const sidebarRecipes = () => {
-    if (view === 'favorites') return recipes.filter(r => r.favorite)
-    return recipes
   }
 
   const currentRecipe = recipes.find(r => r.id === currentId) || null
@@ -211,19 +205,17 @@ export default function App() {
           setCurrentId(null)
           setView('list')
         }}>＋ 新增食譜</button>
-        {view !== 'search' && view !== 'settings' && (
-          <div className={styles.recipeList}>
-            {sidebarRecipes().map(r => (
-              <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
-                <div className={styles.recipeItemName}>{r.name}</div>
-                <div className={styles.recipeItemMeta}>
-                  {r.favorite && <span style={{color:'#E24B4A',display:'inline-flex',alignItems:'center'}}><FavHeartIcon filled={true} /></span>}
-                  <span>{r.servings}人份</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className={styles.recipeList}>
+          {recipes.map(r => (
+            <button key={r.id} className={`${styles.recipeItem} ${currentId===r.id?styles.recipeItemActive:''}`} onClick={() => openRecipe(r.id)}>
+              <div className={styles.recipeItemName}>{r.name}</div>
+              <div className={styles.recipeItemMeta}>
+                {r.favorite && <span style={{color:'#E24B4A',display:'inline-flex',alignItems:'center'}}><FavHeartIcon filled={true} /></span>}
+                <span>{r.servings}人份</span>
+              </div>
+            </button>
+          ))}
+        </div>
       </aside>
 
       {/* MAIN */}
@@ -256,10 +248,10 @@ export default function App() {
             settings={settings}
           />
         ) : (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}><PotIcon /></div>
-            <p>從左側選擇食譜<br />或點擊「新增食譜」開始建立</p>
-          </div>
+          <RecipeGrid
+            recipes={view === 'favorites' ? recipes.filter(r => r.favorite) : recipes}
+            onOpen={openRecipe}
+          />
         )}
       </main>
 
@@ -329,29 +321,6 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
           <div className={styles.recipeHeader}>
             <h1 className={styles.recipeName}>{recipe.name}</h1>
           </div>
-          {(recipe.urls || []).length > 0 && (
-            <div className={styles.urlList}>
-              {recipe.urls.map((u, i) => (
-                <div key={i} className={styles.urlBlock}>
-                  <a href={u.url} target="_blank" rel="noreferrer" className={styles.urlBlockName}>
-                    <LinkIcon /> {u.name || `來源 ${i + 1}`}
-                  </a>
-                  <div className={styles.urlBlockUrl}>{u.url}</div>
-                  {u.note && <div className={styles.urlBlockNote}>{u.note}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className={styles.servingScaler}>
-            <button className={styles.servingBtn} onClick={() => changeScale(-1)}>−</button>
-            <span>{displayServings} 人份</span>
-            <button className={styles.servingBtn} onClick={() => changeScale(1)}>＋</button>
-            {scale !== 1 && <button className={styles.resetLink} onClick={() => onScaleChange(1)}>重設</button>}
-            <button className={styles.favBtn} onClick={onToggleFav} title={recipe.favorite ? '取消最愛' : '加入最愛'}>
-              <FavHeartIcon filled={recipe.favorite} />
-            </button>
-          </div>
 
           {/* Tags */}
           {Object.entries(recipe.tags || {}).some(([,v]) => v?.length) && (
@@ -365,6 +334,30 @@ function RecipeView({ recipe, scale, onScaleChange, onEdit, onDelete, onToggleFa
                   </div>
                 ) : null
               )}
+            </div>
+          )}
+
+          <div className={styles.servingScaler}>
+            <button className={styles.servingBtn} onClick={() => changeScale(-1)}>−</button>
+            <span>{displayServings} 人份</span>
+            <button className={styles.servingBtn} onClick={() => changeScale(1)}>＋</button>
+            {scale !== 1 && <button className={styles.resetLink} onClick={() => onScaleChange(1)}>重設</button>}
+            <button className={styles.favBtn} onClick={onToggleFav} title={recipe.favorite ? '取消最愛' : '加入最愛'}>
+              <FavHeartIcon filled={recipe.favorite} />
+            </button>
+          </div>
+
+          {(recipe.urls || []).length > 0 && (
+            <div className={styles.urlList}>
+              {recipe.urls.map((u, i) => (
+                <div key={i} className={styles.urlBlock}>
+                  <a href={u.url} target="_blank" rel="noreferrer" className={styles.urlBlockName}>
+                    <LinkIcon /> {u.name || `來源 ${i + 1}`}
+                  </a>
+                  <div className={styles.urlBlockUrl}>{u.url}</div>
+                  {u.note && <div className={styles.urlBlockNote}>{u.note}</div>}
+                </div>
+              ))}
             </div>
           )}
 
@@ -537,7 +530,9 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
           <div style={{display:'flex',gap:16,alignItems:'flex-end',flexWrap:'wrap'}}>
             <div className={styles.formSection} style={{maxWidth:180}}>
               <label className={styles.formLabel}>基準份量（人份）</label>
-              <input className={styles.formInput} type="number" min={1} value={r.servings} onChange={e => setField('servings', parseInt(e.target.value)||2)} />
+              <select className={styles.formSelect} value={r.servings} onChange={e => setField('servings', parseInt(e.target.value))}>
+                {[1,2,3,4,5,6,7,8,10,12].map(n => <option key={n} value={n}>{n} 人份</option>)}
+              </select>
             </div>
             <div className={styles.formSection}>
               <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13,color:'var(--text2)'}}>
@@ -545,6 +540,23 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
               </label>
             </div>
           </div>
+
+          <div className={styles.formDivider} />
+
+          {/* TAGS */}
+          <div className={styles.formSectionHeader}>Tags</div>
+          {Object.entries(settings.tag_types).map(([type, vals]) => (
+            <div key={type} className={styles.formSection}>
+              <label className={styles.formLabel}>{type}</label>
+              <div className={styles.tagSelectGrid}>
+                {vals.map(v => (
+                  <button key={v}
+                    className={`${styles.selectTag} ${(r.tags[type]||[]).includes(v)?styles.selectTagActive:''}`}
+                    onClick={() => toggleTag(type, v)}>{v}</button>
+                ))}
+              </div>
+            </div>
+          ))}
 
           <div className={styles.formDivider} />
 
@@ -633,23 +645,6 @@ function RecipeForm({ recipe, settings, onSave, onCancel }: {
                 </div>
               ))}
               <button className={styles.addIngBtn} onClick={() => addIng(cat)}>＋ 自訂{cat}</button>
-            </div>
-          ))}
-
-          <div className={styles.formDivider} />
-
-          {/* TAGS */}
-          <div className={styles.formSectionHeader}>Tags</div>
-          {Object.entries(settings.tag_types).map(([type, vals]) => (
-            <div key={type} className={styles.formSection}>
-              <label className={styles.formLabel}>{type}</label>
-              <div className={styles.tagSelectGrid}>
-                {vals.map(v => (
-                  <button key={v}
-                    className={`${styles.selectTag} ${(r.tags[type]||[]).includes(v)?styles.selectTagActive:''}`}
-                    onClick={() => toggleTag(type, v)}>{v}</button>
-                ))}
-              </div>
             </div>
           ))}
 
@@ -893,6 +888,40 @@ function parseIngredientsFromText(text: string): { name: string; amount: string;
     }
   }
   return results
+}
+
+// ──────────────────────────────────────────────
+// RECIPE GRID (所有食譜 / 我的最愛 preview)
+// ──────────────────────────────────────────────
+function RecipeGrid({ recipes, onOpen }: { recipes: Recipe[], onOpen: (id: number) => void }) {
+  if (recipes.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}><PotIcon /></div>
+        <p>還沒有食譜<br />點擊「新增食譜」開始建立</p>
+      </div>
+    )
+  }
+  return (
+    <div className={styles.content}>
+      <div className={styles.recipeGrid}>
+        {recipes.map(r => (
+          <div key={r.id} className={styles.recipeCard} onClick={() => onOpen(r.id)}>
+            <div className={styles.recipeCardName}>{r.name}</div>
+            <div className={styles.recipeCardTags}>
+              {Object.values(r.tags || {}).flat().map(t => (
+                <span key={t} className={styles.tagBadge} style={{fontSize:10}}>{t}</span>
+              ))}
+            </div>
+            <div className={styles.recipeCardMeta}>
+              <span>{r.servings}人份</span>
+              {r.favorite && <FavHeartIcon filled={true} />}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function levenshtein(a: string, b: string): number {
